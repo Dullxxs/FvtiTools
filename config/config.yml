@@ -1,0 +1,22 @@
+s:
+  qq-api: 'ws://'  #go-cqhttp 正向websocket
+  nick-name: 'nmsl' #机器人名字????，好像没屌用，不清楚
+  nick-qq-number: 1145141919 #机器人的qq号，这个得写，不然定时任务会失效!!!!!
+  health-cron: '0 6 * * *'  #早健康日报
+  health-cron2: '0 12 * * *'  #午健康日报
+  health-cron3: '0 18 * * *'  #晚健康日报
+  health-cron4: '0 20 * * *'  #晚点名(现在没吊用，建议属于0，进行关闭)
+  live-state: '1' #1：在家 2：在校 3：实习
+  admin-qq:  #管理员的qq账号
+u:
+  - user: '学号'  #福职健康小程序账号
+    pass: ''
+    cookie: ''
+    user2: '身份证号码'
+    pass2: '身份证号码'
+    cookie2: ''
+    room: '' #宿舍号
+    roomYda :
+    qq-number: 1145141919 #推送的qq号
+    qq-GroupNumber: 1145141919 #推送的qq群号，只推课表,电费之类的
+    remark: '备注'
