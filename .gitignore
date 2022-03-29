@@ -1,0 +1,12 @@
+/config/
+/config/config.go
+/config/config.yml
+/plugin/
+/plugin/command/
+/plugin/dormitoryElectricity/
+/plugin/health/
+/plugin/timeTable/
+/plugin/timeTable2/
+/go.mod
+/main.go
+/README.md
