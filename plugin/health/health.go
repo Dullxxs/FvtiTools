@@ -302,19 +302,27 @@ func HealthRosterID(AccessToken string) (RosterID string) {
 }
 
 func HealthGo(info config.U, dataType string, second bool) {
+	time.Sleep(time.Second * 10)
 	log.Println("开始", info.User)
 	var (
 		title   = "健康日报失败"
 		content = info.User
 		endTime string
+		errFunc = func() {
+			title = "第一次签到失败,10分钟后准备二次签到"
+			go func() {
+				time.Sleep(time.Minute * 10)
+				HealthGo(info, dataType, true)
+			}()
+		}
 	)
 	defer func() {
 		pushMsg(info, title, content)
+		errFunc()
 	}()
 	AccessToken := fvtiLogin(info)
 	if AccessToken == "" {
 		log.Println("登录失败")
-		title = title + " " + "登录失败"
 		return
 	}
 	switch dataType {
@@ -378,15 +386,11 @@ func HealthGo(info config.U, dataType string, second bool) {
 		case "3":
 			title = "晚健康日报成功"
 		}
+		errFunc = func() {}
 	} else {
 		if second {
 			title = "二次签到已失败"
-		} else {
-			title = "第一次签到失败,10分钟后准备二次签到"
-			go func() {
-				time.Sleep(time.Minute * 10)
-				HealthGo(info, dataType, true)
-			}()
+			errFunc = func() {}
 		}
 	}
 }

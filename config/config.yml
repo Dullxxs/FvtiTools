@@ -5,7 +5,7 @@ s:
   health-cron: '0 6 * * *'  #早健康日报
   health-cron2: '0 12 * * *'  #午健康日报
   health-cron3: '0 18 * * *'  #晚健康日报
-  health-cron4: '0 20 * * *'  #晚点名(现在没吊用，建议属于0，进行关闭)
+  health-cron4: '0 20 * * *'  #晚点名(现在没吊用，建议输入0，进行关闭)
   live-state: '1' #1：在家 2：在校 3：实习
   admin-qq:  #管理员的qq账号
 u:

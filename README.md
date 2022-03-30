@@ -5,7 +5,7 @@
 * 宿舍电量查询以及群推送。
 * ~~课表查询以及群推送。~~ 有空修
 * 支持qq推送
-
+* 支持多用户
 ## 使用
 * 随便下载一个支持正向websocket OneBot v11的框架即可，推荐[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)
 * 配置好框架，打开程序，会生成一个yml.
