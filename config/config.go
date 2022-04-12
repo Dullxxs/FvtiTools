@@ -67,6 +67,7 @@ type Setting struct {
 	HealthCron2  string `yaml:"health-cron2"`
 	HealthCron3  string `yaml:"health-cron3"`
 	HealthCron4  string `yaml:"health-cron4"`
+	HealthCron5  string `yaml:"health-cron5"`
 	LiveState    string `yaml:"live-state"`
 }
 

@@ -19,14 +19,45 @@ import (
 	"time"
 )
 
+var hGo = func(v config.U, dType string) {
+	var context string
+	var context2 string
+	switch dType {
+	case "1":
+		context = "早报第一次失败，准备十分钟后重报"
+		context2 = "早报健康日报成功"
+	case "2":
+		context = "午报第一次失败，准备十分钟后重报"
+		context2 = "午报健康日报成功"
+	case "3":
+		context = "晚报第一次失败，准备十分钟后重报"
+		context2 = "晚报健康日报成功"
+	}
+	err := HealthGo(v, dType)
+	if err != nil {
+		pushMsg(v, context, v.User)
+		go func() {
+			time.Sleep(time.Minute * 10)
+			err = HealthGo(v, dType)
+			if err != nil {
+				pushMsg(v, v.User, "第二次都失败了，没救了，等晚上吧")
+				return
+			}
+		}()
+	} else {
+		pushMsg(v, context2, v.User)
+	}
+}
+
 func addCron() {
 	s := config.GetSetting()
 	c := cron.New()
 	log.Println(s)
+
 	_, err := c.AddFunc(s.HealthCron, func() {
 		user := config.GetUserAll()
 		for _, v := range user {
-			HealthGo(v, "1", false)
+			hGo(v, "1")
 		}
 	})
 	if err != nil {
@@ -36,7 +67,7 @@ func addCron() {
 	_, err = c.AddFunc(s.HealthCron2, func() {
 		user := config.GetUserAll()
 		for _, v := range user {
-			HealthGo(v, "2", false)
+			hGo(v, "2")
 		}
 	})
 	if err != nil {
@@ -46,13 +77,14 @@ func addCron() {
 	_, err = c.AddFunc(s.HealthCron3, func() {
 		user := config.GetUserAll()
 		for _, v := range user {
-			HealthGo(v, "3", false)
+			hGo(v, "3")
 		}
 	})
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
 	if s.HealthCron4 != "0" {
 		_, err = c.AddFunc(s.HealthCron4, func() {
 			user := config.GetUserAll()
@@ -65,10 +97,63 @@ func addCron() {
 			return
 		}
 	}
+	_, err = c.AddFunc(s.HealthCron5, func() {
+		user := config.GetUserAll()
+		for _, v := range user {
+			s, err := healthCheck(v)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			go func(v config.U, s []string) {
+				if len(s) == 0 {
+					pushMsg(v, v.User, "今天全签了")
+					return
+				}
+				for _, v2 := range s {
+					switch v2 {
+					case "1":
+						pushMsg(v, v.User, "早上没签，准备补签")
+					case "2":
+						pushMsg(v, v.User, "中午没签，准备补签")
+					case "3":
+						pushMsg(v, v.User, "晚上没签，准备补签")
+					}
+					hGo(v, v2)
+				}
+			}(v, s)
+		}
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	c.Start()
 	defer c.Stop()
 	log.Println("cron添加成功")
 	select {}
+}
+
+func healthCheck(info config.U) ([]string, error) {
+	token := fvtiLogin(info)
+	data, err := healthSendPost(getHealthIdApi, []byte("{\"page\":1,\"rows\":9}"), 1, token)
+	if err != nil {
+		return []string{}, err
+	}
+	healthIdx := new(healthId)
+	err = json.Unmarshal(data, &healthIdx)
+	if err != nil {
+		return []string{}, err
+	}
+	var d []string
+	for _, v := range healthIdx.Rows {
+		if v.DataDate == time.Now().Format("2006-01-02") {
+			if v.DataStatus != "2" {
+				d = append(d, v.DataType)
+			}
+		}
+	}
+	return d, nil
 }
 func init() {
 	go addCron()
@@ -85,9 +170,25 @@ func init() {
 			return
 		}
 		ctx.Send(message.Text("指令已发送"))
-		HealthGo(u, "1", false)
-		HealthGo(u, "2", false)
-		HealthGo(u, "3", false)
+		hGo(u, "1")
+		hGo(u, "2")
+		hGo(u, "3")
+	})
+	zero.OnCommand("一键全签", zero.SuperUserPermission).Handle(func(ctx *zero.Ctx) {
+		user := config.GetUserAll()
+		for _, v := range user {
+			hGo(v, "1")
+			hGo(v, "2")
+			hGo(v, "3")
+		}
+		ctx.Send(message.Text("ok"))
+	})
+	zero.OnCommand("debug", zero.SuperUserPermission).Handle(func(ctx *zero.Ctx) {
+		user := config.GetUserAll()
+		hGo(user[0], "1")
+		hGo(user[0], "2")
+		hGo(user[0], "3")
+		ctx.Send(message.Text("ok"))
 	})
 }
 
@@ -301,29 +402,13 @@ func HealthRosterID(AccessToken string) (RosterID string) {
 	return rosterIdModelx.Rows[0].RosterID
 }
 
-func HealthGo(info config.U, dataType string, second bool) {
+func HealthGo(info config.U, dataType string) error {
 	time.Sleep(time.Second * 10)
 	log.Println("开始", info.User)
-	var (
-		title   = "健康日报失败"
-		content = info.User
-		endTime string
-		errFunc = func() {
-			title = "第一次签到失败,10分钟后准备二次签到"
-			go func() {
-				time.Sleep(time.Minute * 10)
-				HealthGo(info, dataType, true)
-			}()
-		}
-	)
-	defer func() {
-		pushMsg(info, title, content)
-		errFunc()
-	}()
+	var endTime string
 	AccessToken := fvtiLogin(info)
 	if AccessToken == "" {
-		log.Println("登录失败")
-		return
+		return fmt.Errorf("登录失败")
 	}
 	switch dataType {
 	case "1":
@@ -363,7 +448,7 @@ func HealthGo(info config.U, dataType string, second bool) {
 	data, err := healthSendPost(healthGoApi, []byte(x.Encode()), 2, AccessToken)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	var postResp struct {
 		IsSuccess bool `json:"isSuccess"`
@@ -373,26 +458,13 @@ func HealthGo(info config.U, dataType string, second bool) {
 	log.Println(string(data))
 	err = json.Unmarshal(data, &postResp)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 
 	if postResp.IsSuccess {
-		switch dataType {
-		case "1":
-			title = "早健康日报成功"
-		case "2":
-			title = "中健康日报成功"
-		case "3":
-			title = "晚健康日报成功"
-		}
-		errFunc = func() {}
-	} else {
-		if second {
-			title = "二次签到已失败"
-			errFunc = func() {}
-		}
+		return nil
 	}
+	return fmt.Errorf("失败")
 }
 
 func healthSendPost(url string, data []byte, typex int, token string) ([]byte, error) {

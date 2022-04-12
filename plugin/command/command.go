@@ -2,7 +2,6 @@ package command
 
 import (
 	"FvtiTools/config"
-	"FvtiTools/plugin/health"
 	log "github.com/sirupsen/logrus"
 	zero "github.com/wdvxdr1123/ZeroBot"
 	"github.com/wdvxdr1123/ZeroBot/extension/shell"
@@ -100,20 +99,4 @@ func init() {
 		config.SaveUser(u)
 	})
 
-	zero.OnCommand("一键全签", zero.SuperUserPermission).Handle(func(ctx *zero.Ctx) {
-		user := config.GetUserAll()
-		for _, v := range user {
-			health.HealthGo(v, "1", false)
-			health.HealthGo(v, "2", false)
-			health.HealthGo(v, "3", false)
-		}
-		ctx.Send(message.Text("ok"))
-	})
-	zero.OnCommand("debug", zero.SuperUserPermission).Handle(func(ctx *zero.Ctx) {
-		user := config.GetUserAll()
-		health.HealthGo(user[0], "1", false)
-		health.HealthGo(user[0], "2", false)
-		health.HealthGo(user[0], "3", false)
-		ctx.Send(message.Text("ok"))
-	})
 }
