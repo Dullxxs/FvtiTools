@@ -102,8 +102,8 @@ func addCron() {
 		for _, v := range user {
 			s, err := healthCheck(v)
 			if err != nil {
-				log.Println(err)
-				return
+				pushMsg(v, v.User, "晚间补签检查错误，请自行上号检查")
+				continue
 			}
 			go func(v config.U, s []string) {
 				if len(s) == 0 {
@@ -135,7 +135,7 @@ func addCron() {
 }
 
 func healthCheck(info config.U) ([]string, error) {
-	token := fvtiLogin(info)
+	token := FvtiLogin(info)
 	data, err := healthSendPost(getHealthIdApi, []byte("{\"page\":1,\"rows\":9}"), 1, token)
 	if err != nil {
 		return []string{}, err
@@ -162,7 +162,7 @@ func init() {
 		if u.User == "" {
 			return
 		}
-		ctx.Send(message.Text(fvtiLogin(u)))
+		ctx.Send(message.Text(FvtiLogin(u)))
 	})
 	zero.OnCommand("手动签到").Handle(func(ctx *zero.Ctx) {
 		u := config.GetUser(ctx.Event.UserID)
@@ -251,7 +251,7 @@ func check(accessToken string) bool {
 	}
 	return false
 }
-func fvtiLogin(info config.U) string {
+func FvtiLogin(info config.U) string {
 	if info.Cookie != "" {
 		b := check(info.Cookie)
 		if b {
@@ -300,7 +300,7 @@ func HealthGo2(info config.U) {
 	defer func() {
 		pushMsg(info, title, content)
 	}()
-	AccessToken := fvtiLogin(info)
+	AccessToken := FvtiLogin(info)
 	if AccessToken == "" {
 		log.Println("登录错误")
 		return
@@ -406,7 +406,7 @@ func HealthGo(info config.U, dataType string) error {
 	time.Sleep(time.Second * 10)
 	log.Println("开始", info.User)
 	var endTime string
-	AccessToken := fvtiLogin(info)
+	AccessToken := FvtiLogin(info)
 	if AccessToken == "" {
 		return fmt.Errorf("登录失败")
 	}

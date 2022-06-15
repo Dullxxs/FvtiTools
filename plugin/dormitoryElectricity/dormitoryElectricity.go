@@ -130,6 +130,7 @@ func getRoomQuantity(Room string) (float32, error) {
 	}
 	var c buildCode
 	err = json.Unmarshal(readAll, &c)
+	log.Println(string(readAll))
 	if err != nil {
 		log.Println(err)
 		return 0, err

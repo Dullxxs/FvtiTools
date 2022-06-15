@@ -3,7 +3,6 @@ package main
 import (
 	"FvtiTools/config"
 	_ "FvtiTools/plugin/command"
-	_ "FvtiTools/plugin/dormitoryElectricity"
 	_ "FvtiTools/plugin/health"
 	//_ "FvtiTools/plugin/timeTable"
 	//_ "embed"
@@ -14,8 +13,8 @@ import (
 )
 
 func main() {
-	config := config.GetSetting()
-	LiveState := config.LiveState
+	setting := config.GetSetting()
+	LiveState := setting.LiveState
 	switch LiveState {
 	case "1":
 		log.Println("在家")
@@ -28,11 +27,11 @@ func main() {
 		return
 	}
 	zero.Run(zero.Config{
-		NickName:      []string{config.NickName},
+		NickName:      []string{setting.NickName},
 		CommandPrefix: "/",
-		SuperUsers:    []string{strconv.FormatInt(config.AdminQq, 10)},
+		SuperUsers:    []string{strconv.FormatInt(setting.AdminQq, 10)},
 		Driver: []zero.Driver{
-			driver.NewWebSocketClient(config.QqApi, ""),
+			driver.NewWebSocketClient(setting.QqApi, ""),
 		},
 	})
 	select {}

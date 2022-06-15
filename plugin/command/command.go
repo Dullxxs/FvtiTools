@@ -2,6 +2,7 @@ package command
 
 import (
 	"FvtiTools/config"
+	"FvtiTools/plugin/health"
 	log "github.com/sirupsen/logrus"
 	zero "github.com/wdvxdr1123/ZeroBot"
 	"github.com/wdvxdr1123/ZeroBot/extension/shell"
@@ -24,6 +25,7 @@ var (
 		"电费 - 查询宿舍用电量",
 		"绑定宿舍 - 绑定宿舍",
 		"绑定群 - 绑定QQ群",
+		"修改密码 - 修改健康秘钥",
 		"用户信息 - 查看用户信息",
 		"",
 	}, "\n")
@@ -34,6 +36,25 @@ func init() {
 
 	zero.OnCommand("帮助").Handle(func(ctx *zero.Ctx) {
 		ctx.Send(message.Text(helpText))
+	})
+
+	zero.OnCommand("修改密码", zero.OnlyPrivate).Handle(func(ctx *zero.Ctx) {
+		u := config.GetUser(ctx.Event.UserID)
+		if u.QqNumber != ctx.Event.UserID {
+			return
+		}
+		arguments := shell.Parse(ctx.State["args"].(string))
+		if len(arguments) != 1 {
+			ctx.Send(message.Text("格式错误,正确格式\n/修改密码 114514"))
+			return
+		}
+		u.Pass = arguments[0]
+		if health.FvtiLogin(u) != "" {
+			config.SaveUser(u)
+			ctx.Send(message.Text("绑定好了，拉机器人入群吧"))
+			return
+		}
+		ctx.Send(message.Text("密码错误，或者学校服务器抽风了"))
 	})
 	zero.OnRequest().SetBlock(false).FirstPriority().Handle(func(ctx *zero.Ctx) {
 		u := config.GetUser(ctx.Event.UserID)
@@ -74,14 +95,14 @@ func init() {
 		ctx.Send(message.Text("绑定好了，拉机器人入群吧"))
 	})
 
-	zero.OnCommand("用户信息").Handle(func(ctx *zero.Ctx) {
+	zero.OnCommand("用户信息", zero.OnlyPrivate).Handle(func(ctx *zero.Ctx) {
 		u := config.GetUser(ctx.Event.UserID)
 		if u.QqNumber != ctx.Event.UserID {
 			return
 		}
 		i := strings.Join([]string{
-			"微信健康账号:" + u.User,
-			"微信健康密码:" + u.Pass,
+			"健康用户:" + u.User,
+			"健康秘钥:" + u.Pass,
 			//"飞翔bot账号:" + u.User2,
 			//"飞翔bot密码:" + u.Pass2,
 			"绑定宿舍号:" + u.Room,

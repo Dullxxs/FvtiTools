@@ -14,7 +14,7 @@ func TestHealthGo(t *testing.T) {
 		Pass: "",
 	}
 	utest.Pass = fmt.Sprintf("%x", md5.Sum([]byte(utest.Pass)))
-	log.Println(fvtiLogin(utest) == "")
+	log.Println(FvtiLogin(utest) == "")
 	//liveState = "1"
 	//healthGo(utest, "3")
 
